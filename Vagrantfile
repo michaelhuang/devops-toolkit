@@ -1,5 +1,13 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
+$repo_script = <<SCRIPT
+
+sudo cp /etc/apt/sources.list /etc/apt/sources.list_backup
+wget -O /etc/apt/sources.list http://mirrors.aliyun.com/repo/ubuntu1404-lts.list
+sudo apt-get clean
+sudo apt-get update
+
+SCRIPT
 
 Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/trusty64"
@@ -9,10 +17,12 @@ Vagrant.configure(2) do |config|
     config.vm.synced_folder ".", "/vagrant"
   end
   config.vm.provider "virtualbox" do |v|
+    v.cpus = 2
     v.memory = 2048
   end
   config.vm.define :dev do |dev|
     dev.vm.network "private_network", ip: "10.100.199.200"
+    dev.vm.provision :shell, :inline => $repo_script
     dev.vm.provision :shell, path: "bootstrap.sh"
     dev.vm.provision :shell,
       inline: 'PYTHONUNBUFFERED=1 ansible-playbook \
